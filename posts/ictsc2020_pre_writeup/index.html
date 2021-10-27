@@ -1,0 +1,315 @@
+<!doctype html><html lang=ja-jp>
+<head>
+<title>ICTSC2020予選writeup // kob | blog</title>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.88.1">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="yugo kobayashi">
+<meta name=description content>
+<link rel=stylesheet href=https://www.k06.in/css/main.min.88e7083eff65effb7485b6e6f38d10afbec25093a6fac42d734ce9024d3defbd.css>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(a,e,f,g,b,c,d){a.GoogleAnalyticsObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=1,c.src=g,d.parentNode.insertBefore(c,d)}(window,document,'script','https://www.google-analytics.com/analytics.js','ga'),ga('create','UA-147206080-1','auto'),ga('send','pageview'))</script>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="ICTSC2020予選writeup">
+<meta name=twitter:description content="ICTSC2020の予選にkstmで参加したので、writeupを書きます。
+結果は4位でした。
+当日私が解いた問題は
+ またビルド失敗しちゃった～ ダイエットしようぜ！ どこからもアクセスできなくなっちゃった  の3つ1でどれも満点でした
+またビルド失敗しちゃった～ 問題文 概要
+新入社員の障害太郎くんがGoの勉強をしようとしています。 どうやらDockerのマルチステージビルドを使って、Goのバイナリをコンテナ上で実行しようとしたらうまく立ち上がらないようです。 先輩のトラシュウさんに聞いたところ、「Dockerfileが間違っている」というメモを残して業務に戻ってしまいました。 先輩のトラシュウさんの代わりに原因を特定して修正してあげてください。 前提条件
+~/app/Dockerfile のみ変更可能です。 ~/app/Dockerfile の1,9,12行目は変更しないでください。 ビルド用のコンテナとバイナリ実行用のコンテナは分けてください。 初期状態
+~/app/Dockerfileを用いてdocker image build -t ictsc2020:0.1 .したあとに、docker run -p 80:1323 [コンテナID]をするとエラーが表示され、コンテナ上のバイナリが正常に実行できません。 終了状態
+curl localhostでWelcome to ICTSC2020!が返ってくる。 また、問題の解決が永続化されている。 解説 元のDockerfileがこれです。
+FROMgolang:1.15.0 AS builderENV GO111MODULE=on ENV GOPATH=COPY ./server/main.go ./RUN go mod init ictsc2020RUN go build -o /app ./main.goFROMalpine:3.12COPY --from=builder /app .EXPOSE1323ENTRYPOINT [&#34;./app&#34;]発生しているエラーの原因が依存ライブラリが見つからないのでgoのバイナリが実行できないという物です。
+これはgoのビルド時に特定のパッケージを使用していると確かglibcをdynamic linkしてビルドします。で、Docierfileに書かれているgolang:1.15.0ってイメージはdebianがベースになっているので、その上でビルドしたバイナリをalpineの環境に持っていっても動作しません。
+なのでgoのビルド時にCGO_ENABLED=0って環境変数を設定すると依存ライブラリがstatic linkになるので、これを設定して他の環境でも使えるバイナリを作ることができます。
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app .">
+<meta property="og:title" content="ICTSC2020予選writeup">
+<meta property="og:description" content="ICTSC2020の予選にkstmで参加したので、writeupを書きます。
+結果は4位でした。
+当日私が解いた問題は
+ またビルド失敗しちゃった～ ダイエットしようぜ！ どこからもアクセスできなくなっちゃった  の3つ1でどれも満点でした
+またビルド失敗しちゃった～ 問題文 概要
+新入社員の障害太郎くんがGoの勉強をしようとしています。 どうやらDockerのマルチステージビルドを使って、Goのバイナリをコンテナ上で実行しようとしたらうまく立ち上がらないようです。 先輩のトラシュウさんに聞いたところ、「Dockerfileが間違っている」というメモを残して業務に戻ってしまいました。 先輩のトラシュウさんの代わりに原因を特定して修正してあげてください。 前提条件
+~/app/Dockerfile のみ変更可能です。 ~/app/Dockerfile の1,9,12行目は変更しないでください。 ビルド用のコンテナとバイナリ実行用のコンテナは分けてください。 初期状態
+~/app/Dockerfileを用いてdocker image build -t ictsc2020:0.1 .したあとに、docker run -p 80:1323 [コンテナID]をするとエラーが表示され、コンテナ上のバイナリが正常に実行できません。 終了状態
+curl localhostでWelcome to ICTSC2020!が返ってくる。 また、問題の解決が永続化されている。 解説 元のDockerfileがこれです。
+FROMgolang:1.15.0 AS builderENV GO111MODULE=on ENV GOPATH=COPY ./server/main.go ./RUN go mod init ictsc2020RUN go build -o /app ./main.goFROMalpine:3.12COPY --from=builder /app .EXPOSE1323ENTRYPOINT [&#34;./app&#34;]発生しているエラーの原因が依存ライブラリが見つからないのでgoのバイナリが実行できないという物です。
+これはgoのビルド時に特定のパッケージを使用していると確かglibcをdynamic linkしてビルドします。で、Docierfileに書かれているgolang:1.15.0ってイメージはdebianがベースになっているので、その上でビルドしたバイナリをalpineの環境に持っていっても動作しません。
+なのでgoのビルド時にCGO_ENABLED=0って環境変数を設定すると依存ライブラリがstatic linkになるので、これを設定して他の環境でも使えるバイナリを作ることができます。
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app .">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.k06.in/posts/ictsc2020_pre_writeup/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-11-06T23:55:46+09:00">
+<meta property="article:modified_time" content="2020-11-06T23:55:46+09:00">
+</head>
+<body>
+<header class=app-header>
+<a href=https://www.k06.in/><img class=app-header-avatar src=https://avatars.githubusercontent.com/u/28655507 alt="yugo kobayashi"></a>
+<h1>kob | blog</h1>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About</a>
+-
+<a class=app-header-menu-item href=/posts/>Post</a>
+-
+<a class=app-header-menu-item href=/tags/>Tag</a>
+</nav>
+<p>I'm yugo kobayashi. CloudNative / kubernetes / archlinux</p>
+<div class=app-header-social>
+<a target=_blank href=https://github.com/koba1t rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
+<a target=_blank href=https://twitter.com/0x6b6f62 rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-twitter"><title>twitter</title><path d="M23 3a10.9 10.9.0 01-3.14 1.53 4.48 4.48.0 00-7.86 3v1A10.66 10.66.0 013 4s-4 9 5 13a11.64 11.64.0 01-7 2c9 5 20 0 20-11.5a4.5 4.5.0 00-.08-.83A7.72 7.72.0 0023 3z"/></svg></a>
+<a target=_blank href=https://500px.com/p/koba1t rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-image"><title>image</title><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></a>
+<a target=_blank href=https://www.linkedin.com/in/koba1t/ rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+</div>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>ICTSC2020予選writeup</h1>
+<div class=post-meta>
+<div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Nov 6, 2020
+</div>
+<div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+3 min read
+</div>
+<div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tag"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg>
+<a class=tag href=https://www.k06.in/tags/ictsc/>ICTSC</a>
+<a class=tag href=https://www.k06.in/tags/writeup/>writeup</a>
+<a class=tag href=https://www.k06.in/tags/linux/>linux</a>
+<a class=tag href=https://www.k06.in/tags/container/>container</a>
+<a class=tag href=https://www.k06.in/tags/kubernetes/>kubernetes</a>
+</div>
+</div>
+</header>
+<div class=post-content>
+<p><a href=https://icttoracon.net/archives/8570>ICTSC2020</a>の予選に<code>kstm</code>で参加したので、writeupを書きます。<br>
+結果は4位でした。</p>
+<p><img src=result_ranking.png alt=result_ranking_image></p>
+<p>当日私が解いた問題は</p>
+<ul>
+<li>またビルド失敗しちゃった～</li>
+<li>ダイエットしようぜ！</li>
+<li>どこからもアクセスできなくなっちゃった</li>
+</ul>
+<p>の3つ<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>でどれも満点でした</p>
+<h1 id=またビルド失敗しちゃった>またビルド失敗しちゃった～</h1>
+<h3 id=問題文>問題文</h3>
+<p>概要</p>
+<pre tabindex=0><code>新入社員の障害太郎くんがGoの勉強をしようとしています。
+どうやらDockerのマルチステージビルドを使って、Goのバイナリをコンテナ上で実行しようとしたらうまく立ち上がらないようです。
+先輩のトラシュウさんに聞いたところ、「Dockerfileが間違っている」というメモを残して業務に戻ってしまいました。
+先輩のトラシュウさんの代わりに原因を特定して修正してあげてください。
+</code></pre><p>前提条件</p>
+<pre tabindex=0><code>~/app/Dockerfile のみ変更可能です。
+~/app/Dockerfile の1,9,12行目は変更しないでください。
+ビルド用のコンテナとバイナリ実行用のコンテナは分けてください。
+</code></pre><p>初期状態</p>
+<pre tabindex=0><code>~/app/Dockerfileを用いてdocker image build -t ictsc2020:0.1 .したあとに、docker run -p 80:1323 [コンテナID]をするとエラーが表示され、コンテナ上のバイナリが正常に実行できません。
+</code></pre><p>終了状態</p>
+<pre tabindex=0><code>curl localhostでWelcome to ICTSC2020!が返ってくる。
+また、問題の解決が永続化されている。
+</code></pre><h3 id=解説>解説</h3>
+<p>元の<code>Dockerfile</code>がこれです。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=color:#66d9ef>FROM</span><span style=color:#e6db74> golang:1.15.0 AS builder</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>ENV</span> GO111MODULE<span style=color:#f92672>=</span>on
+<span style=color:#66d9ef>ENV</span> GOPATH<span style=color:#f92672>=</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>COPY</span> ./server/main.go ./<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>RUN</span> go mod init ictsc2020<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>RUN</span> go build -o /app ./main.go<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>FROM</span><span style=color:#e6db74> alpine:3.12</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>COPY</span> --from<span style=color:#f92672>=</span>builder /app .<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>EXPOSE</span><span style=color:#e6db74> 1323</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>ENTRYPOINT</span> [<span style=color:#e6db74>&#34;./app&#34;</span>]<span style=color:#960050;background-color:#1e0010>
+</span></code></pre></div><p>発生しているエラーの原因が依存ライブラリが見つからないので<code>go</code>のバイナリが実行できないという物です。<br>
+これは<code>go</code>のビルド時に特定のパッケージを使用していると確か<code>glibc</code>を<code>dynamic link</code>してビルドします。で、<code>Docierfile</code>に書かれている<code>golang:1.15.0</code>ってイメージは<code>debian</code>がベースになっているので、その上でビルドしたバイナリを<code>alpine</code>の環境に持っていっても動作しません。</p>
+<p>なので<code>go</code>のビルド時に<code>CGO_ENABLED=0</code>って環境変数を設定すると依存ライブラリが<code>static link</code>になるので、これを設定して他の環境でも使えるバイナリを作ることができます。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=color:#66d9ef>RUN</span> CGO_ENABLED<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span> GOOS<span style=color:#f92672>=</span>linux GOARCH<span style=color:#f92672>=</span>amd64 go build -o /app ./main.go<span style=color:#960050;background-color:#1e0010>
+</span></code></pre></div><h1 id=ダイエットしようぜ>ダイエットしようぜ！</h1>
+<h3 id=問題文-1>問題文</h3>
+<p>概要</p>
+<pre tabindex=0><code>GoでSHA256するhash.goを書いた。これを実行するコンテナが欲しかったので雑にDockerfileを書いてビルドしてイメージを作成した。問題なくSHA256できるようになったが、イメージが大きくてテンションが上がらない。
+あなたには、Dockerfileを編集したりビルドコマンドを変えたり、あるいはビルド後のイメージに対してなにかしたりしてイメージを小さくしてほしい。
+ただし、hash.goのコードにはこだわっているので編集してはならない。
+$ make buildでictsc-ditという名前のDocker imageを作ることができる。詳細はMakefileを参照されたい。採点の際にVMを確認する場合、どのイメージが回答によって作成されたイメージかすぐに判別できるよう、是非使ってほしい。
+</code></pre><p>前提条件</p>
+<pre tabindex=0><code>hash.goを編集してはならない。
+もしよければ$ make buildでDocker imageを作って欲しい。(任意)
+</code></pre><p>初期状態</p>
+<pre tabindex=0><code>$ docker imagesで当該イメージを見ると796MBである。
+Dockerのコマンドはsudoなしで実行できる。
+</code></pre><p>終了状態</p>
+<pre tabindex=0><code>$ docker imagesで当該イメージを見ると796MBより小さくなっている
+    可能な限り小さくしてほしい
+</code></pre><h3 id=解説-1>解説</h3>
+<p>初期状態では<code>golang</code>のイメージ上で<code>go run</code>するだけの<code>Dockerfile</code>だったので<code>800MB</code>近い容量がありましたね。<br>
+とりあえず秘蔵の<code>Dockerfile</code>をコピペしてきてマルチステージビルドの導入とベースイメージを<code>distroless</code>に変更したところ、イメージは<code>3.96MB</code>になりました。<br>
+さすがにこれだけだと減点される気がした<sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup>ので<code>go</code>のビルドオプションに <code>-ldflags "-s -w"</code> をつけて<code>3.28MB</code>までは削減しました。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Dockerfile data-lang=Dockerfile><span style=color:#66d9ef>FROM</span><span style=color:#e6db74> golang:1.15 as builder</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>WORKDIR</span><span style=color:#e6db74> /work</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>COPY</span> hash.go main.go<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#75715e># Build</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>RUN</span> CGO_ENABLED<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span> GOOS<span style=color:#f92672>=</span>linux GOARCH<span style=color:#f92672>=</span>amd64 GO111MODULE<span style=color:#f92672>=</span>on go build -ldflags<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;-s -w&#34;</span> -a -o app main.go<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#75715e># Refer to https://github.com/GoogleContainerTools/distroless for more details</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>FROM</span><span style=color:#e6db74> gcr.io/distroless/static:nonroot</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>WORKDIR</span><span style=color:#e6db74> /</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>COPY</span> --from<span style=color:#f92672>=</span>builder /work/app .<span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>USER</span><span style=color:#e6db74> nonroot:nonroot</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010>
+</span><span style=color:#960050;background-color:#1e0010></span><span style=color:#66d9ef>ENTRYPOINT</span> [<span style=color:#e6db74>&#34;/app&#34;</span>]<span style=color:#960050;background-color:#1e0010>
+</span></code></pre></div><p>これ以上の削減は手間がかかりそうなので時間が余ったらやろうと思ってたんですが、結果的にはそんな時間はありませんでした&mldr;</p>
+<h1 id=どこからもアクセスできなくなっちゃった>どこからもアクセスできなくなっちゃった</h1>
+<h3 id=問題文-2>問題文</h3>
+<p>概要</p>
+<pre tabindex=0><code>k8sのクラスターを、マスター1台(master)、ワーカー2台(worker01, worker02)、ロードバランサー1台(lb)という構成で構築しました。
+ロードバランサーにはHAProxyを用いており、kube-apiserverであるmaster(172.16.0.1:6433)へのプロキシと、各ワーカーの30080のNodePort(172.16.0.11:30080, 172.16.0.12:30080)へのロードバランシング, k8sクラスタの各ノードのデフォルトゲートウェイとしてiptablesを用いたMasqueradeを行っています。
+
+k8sクラスタでは、nginxをreplica 数1つで展開するDeploymentと、それを外部にNodePort 30080で公開するServiceが作成されています。
+このnginxに対して外部(external)からの通信においてhost01からのみアクセスできるといったアクセス制限を行うため、NetworkPolicyを用いて制限をかけたところ、host01からもアクセスできなくなってしまいました。
+
+なぜhost01からもアクセスできないのか原因と解決方法、解決でき再起動しても問題のない作業手順を報告してください。
+</code></pre><p><img src=k8s-problem.png alt=k8s-problem_image></p>
+<p>前提条件</p>
+<pre tabindex=0><code>アクセス制限はNetworkPolicyを用いること
+k8sクラスターにはSSHなどでログインできない
+host01の/home/user/.kube/configにkubeconfigが保存されており、kubectlコマンドでk8sクラスタを利用できる
+host01の/home/user/manifestsに今回使用した各マニフェストが保存されている
+</code></pre><p>初期状態</p>
+<pre tabindex=0><code>host01からcurl -m 2 192.168.0.1:30080 を実行してタイムアウトになる
+host02からcurl -m 2 192.168.0.1:30080 を実行してタイムアウトになる
+k8sにNamespace, Deployment, Service, NetworkPolicyが適用されている
+</code></pre><p>終了状態</p>
+<pre tabindex=0><code>NetworkPolicyを利用してhost01からの通信のみを許可している
+host01からcurl -m 2 192.168.0.1:30080 を実行してk8sでデプロイしたnginxのデフォルトページを表示できる
+host02からcurl -m 2 192.168.0.1:30080 を実行してタイムアウトになる
+終了状態が永続化されている(再起動しても上記の終了状態を確認することができる)
+</code></pre><h3 id=解説-2>解説</h3>
+<p>コンテナのアクセスログにユーザのリアルIPが出てこない!!!ってやつですね、現実でもよくあります。</p>
+<h4 id=1-nodeportの設定>1. NodePortの設定</h4>
+<p>まず、<code>NetworkPolicy</code>を<code>kubectl delete -f</code>して解除してからコンテナのアクセスログを確認します。</p>
+<pre tabindex=0><code class=language-log data-lang=log>172.20.5.0 - - [31/Oct/2020:05:01:20 +0000] &quot;GET / HTTP/1.1&quot; 200 612 &quot;-&quot; &quot;curl/7.58.0&quot; &quot;-&quot;
+172.16.0.12 - - [31/Oct/2020:05:01:21 +0000] &quot;GET / HTTP/1.1&quot; 200 612 &quot;-&quot; &quot;curl/7.58.0&quot; &quot;-&quot;
+2020/10/31 05:06:32 [error] 28#28: *8 open() &quot;/usr/share/nginx/html/from_host01&quot; failed (2: No such file or directory), client: 172.20.5.0, server: localhost, request: &quot;GET /from_host01 HTTP/1.1&quot;, host: &quot;192.168.0.1:30080&quot;
+172.20.5.0 - - [31/Oct/2020:05:06:32 +0000] &quot;GET /from_host01 HTTP/1.1&quot; 404 153 &quot;-&quot; &quot;curl/7.58.0&quot; &quot;-&quot;
+2020/10/31 05:06:52 [error] 28#28: *9 open() &quot;/usr/share/nginx/html/from_host01&quot; failed (2: No such file or directory), client: 172.16.0.12, server: localhost, request: &quot;GET /from_host01 HTTP/1.1&quot;, host: &quot;192.168.0.1:30080&quot;
+172.16.0.12 - - [31/Oct/2020:05:06:52 +0000] &quot;GET /from_host01 HTTP/1.1&quot; 404 153 &quot;-&quot; &quot;curl/7.58.0&quot; &quot;-&quot;
+</code></pre><p>コンテナのログに記録されているIPは <code>172.20.5.0</code>,<code>172.16.0.12</code> の二種類ですね。これは2つともk8sのworkerノードに割り当てられているIPアドレスです。<code>172.16.0.12</code> がworker02の外向きのinterfaceのIPで、詳しく確認していないので憶測ですが <code>172.20.5.0</code> がworker01のPod用ネットワーク側のIPアドレスだと思われます。<br>
+これは<code>Pod</code>をk8s外に公開する時に<a href=https://kubernetes.io/ja/docs/concepts/services-networking/service/#nodeport>Service.NodePort</a>を使っているからですね。<code>NodePort</code>は特定のノードの特定のポート番号でサービスを公開するって機能なのですが、もし通信したい <code>Pod</code> がそのノード上で動いていない場合にも正常にリクエストを返すために他のノード上の <code>Pod</code> にリクエストをプロキシをします。<br>
+今回の構成ではノード2つでサービスを公開していて<code>Pod</code>の数が1つなので、片方のノード上には<code>Pod</code>が動いて正常にリクエストを返せますが、もう片方のノードでは動いていないためそっちにリクエストが来た場合はもう片方のノードにプロキシします。<br>
+あとLBのhaproxyがラウンドロビンでリクエストを送るため、<code>Pod</code> の動いているノードとそうでないノードに交互にリクエストを送ってるためにログに交互に出てきてるんだと思います。</p>
+<p>で、ここは<a href=https://kubernetes.io/ja/docs/tutorials/services/source-ip/#type-nodeport-%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%9Fservice%E3%81%A7%E3%81%AE%E9%80%81%E4%BF%A1%E5%85%83ip>NodePortで送信元IPを使う</a>設定をすることができます。これを設定すると <code>NodePort</code> が <code>nat</code> をしなくなります。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>v1</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Service</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span style=color:#f92672>metadata</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>my-service</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>  <span style=color:#f92672>namespace</span>: <span style=color:#ae81ff>my-ns</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span><span style=color:#f92672>spec</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>  <span style=color:#f92672>selector</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>    <span style=color:#f92672>app</span>: <span style=color:#ae81ff>nginx</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>  <span style=color:#f92672>ports</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>    - <span style=color:#f92672>port</span>: <span style=color:#ae81ff>80</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>      <span style=color:#f92672>nodePort</span>: <span style=color:#ae81ff>30080</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>  <span style=color:#f92672>type</span>: <span style=color:#ae81ff>NodePort</span>
+<span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>  <span style=color:#f92672>externalTrafficPolicy</span>: <span style=color:#ae81ff>Local</span>
+</span></code></pre></div><h4 id=2-haproxyの設定>2. haproxyの設定</h4>
+<p>では、またコンテナのアクセスログを見てみましょう。</p>
+<pre tabindex=0><code class=language-log data-lang=log>172.16.0.254 - - [31/Oct/2020:05:22:49 +0000] &quot;GET /from_host01 HTTP/1.1&quot; 404 153 &quot;-&quot; &quot;curl/7.58.0&quot; &quot;-&quot;
+</code></pre><p>予想通りにLBのホストのIPアドレスがログに記録されるようになりましたね。<br>
+<code>haproxy</code> には送信元IPアドレスを渡す透過プロキシの設定があるのでそれを設定します。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-nginx data-lang=nginx><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span><span style=color:#66d9ef>backend</span> <span style=color:#e6db74>nodeport</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>    <span style=color:#e6db74>mode</span> <span style=color:#e6db74>tcp</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>    <span style=color:#e6db74>balance</span> <span style=color:#e6db74>roundrobin</span>
+<span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>    <span style=color:#e6db74>source</span> <span style=color:#ae81ff>0</span><span style=color:#e6db74>.0.0.0</span> <span style=color:#e6db74>usesrc</span> <span style=color:#e6db74>clientip</span>
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>        <span style=color:#e6db74>server</span> <span style=color:#e6db74>k8s1</span> <span style=color:#ae81ff>172</span><span style=color:#e6db74>.16.0.11</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>        <span style=color:#e6db74>server</span> <span style=color:#e6db74>k8s2</span> <span style=color:#ae81ff>172</span><span style=color:#e6db74>.16.0.12</span>
+</code></pre></div><p>これを設定しただけだと全リクエストがタイムアウトするようになります&mldr;&mldr;<br>
+ぜんぜん解決策がわからかったので仕方無く<code>tcpdump</code>でパケットを見ていたんですが、<code>haproxy</code>自体はちゃんとプロキシしてました。原因はコンテナ側からのarpリクエストが失敗しているせいっぽい感じでした。L7LBなんだから当然ですね&mldr;&mldr;&mldr;.<br>
+ちなみにこれは<a href=https://www.haproxy.com/blog/howto-transparent-proxying-and-binding-with-haproxy-and-aloha-load-balancer/>haproxyのブログ</a>でちゃんと解説されてまして、この通りに設定するだけで動きました。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>iptables -t mangle -N DIVERT
+iptables -t mangle -A PREROUTING -p tcp -m socket -j DIVERT
+iptables -t mangle -A DIVERT -j MARK --set-mark <span style=color:#ae81ff>1</span>
+iptables -t mangle -A DIVERT -j ACCEPT
+
+ip rule add fwmark <span style=color:#ae81ff>1</span> lookup <span style=color:#ae81ff>100</span>
+ip route add local 0.0.0.0/0 dev lo table <span style=color:#ae81ff>100</span>
+</code></pre></div><p><code>iptables</code> で該当するパケットにマークをつけて、<code>haproxy</code>に行くように<code>loopback</code>に転送するらしいです。</p>
+<h4 id=3-12の確率でリクエストが失敗する>3. 1/2の確率でリクエストが失敗する&mldr;.</h4>
+<p>ここまでの設定で送信元のIPアドレスがコンテナまで伝わるようになりました。<br>
+<code>NetworkPolicy</code>を適用するとちゃんと <code>host01</code> は通信でき、 <code>host02</code> はタイムアウトするという条件は達成できています。</p>
+<p>ただ、 <code>host01</code> からのリクエストでも <code>1/2</code> の確率でタイムアウトするという現象が発生してました<sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup>。</p>
+<p>これは上の方でも紹介した<a href=https://kubernetes.io/ja/docs/tutorials/services/source-ip/#type-nodeport-%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%9Fservice%E3%81%A7%E3%81%AE%E9%80%81%E4%BF%A1%E5%85%83ip>NodePortで送信元IPを使う</a>というドキュメントにちゃんと書いてあるんですが、送信元IPを使う設定をした場合はノード間のプロキシが行われなくなります<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>。<br>
+で、今回は片方には <code>Pod</code> があって片方には無いので、 <code>Pod</code> がある方にラウンドロビンされたらリクエストが成功して、もし無い方にリクエストが来た場合は <code>NetworkPolicy</code> 関係無くタイムアウトするって現象でした。</p>
+<p>これを解決する方法はいくつかあるんですが、私は<code>Deployment</code>の設定を雑に<code>replica: 2</code>にして、あとはスケジュールの設定をして2つの <code>Pod</code> がノード間で分散するようにしました。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1</span><span style=color:#f92672>apiVersion</span>: <span style=color:#ae81ff>apps/v1</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2</span><span style=color:#f92672>kind</span>: <span style=color:#ae81ff>Deployment</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3</span><span style=color:#f92672>metadata</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span>  <span style=color:#f92672>name</span>: <span style=color:#ae81ff>my-deployment</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>  <span style=color:#f92672>namespace</span>: <span style=color:#ae81ff>my-ns</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>  <span style=color:#f92672>labels</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>    <span style=color:#f92672>app</span>: <span style=color:#ae81ff>nginx</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span><span style=color:#f92672>spec</span>:
+<span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>  <span style=color:#f92672>replicas</span>: <span style=color:#ae81ff>2</span>
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>  <span style=color:#f92672>selector</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>    <span style=color:#f92672>matchLabels</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>      <span style=color:#f92672>app</span>: <span style=color:#ae81ff>nginx</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>  <span style=color:#f92672>template</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>    <span style=color:#f92672>metadata</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>      <span style=color:#f92672>labels</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>        <span style=color:#f92672>app</span>: <span style=color:#ae81ff>nginx</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>    <span style=color:#f92672>spec</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>      <span style=color:#f92672>containers</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>        - <span style=color:#f92672>name</span>: <span style=color:#ae81ff>nginx</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">20</span>          <span style=color:#f92672>image</span>: <span style=color:#ae81ff>nginx</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">21</span>          <span style=color:#f92672>ports</span>:
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span>            - <span style=color:#f92672>containerPort</span>: <span style=color:#ae81ff>80</span>
+<span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>      <span style=color:#f92672>affinity</span>:
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>        <span style=color:#f92672>podAntiAffinity</span>:
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>          <span style=color:#f92672>requiredDuringSchedulingIgnoredDuringExecution</span>:
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span>          - <span style=color:#f92672>labelSelector</span>:
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span>              <span style=color:#f92672>matchExpressions</span>:
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span>              - <span style=color:#f92672>key</span>: <span style=color:#ae81ff>app</span>
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>                <span style=color:#f92672>operator</span>: <span style=color:#ae81ff>In</span>
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">30</span>                <span style=color:#f92672>values</span>:
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">31</span>                - <span style=color:#ae81ff>nginx</span>
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">32</span>            <span style=color:#f92672>topologyKey</span>: <span style=color:#ae81ff>kubernetes.io/hostname</span>
+</span></code></pre></div><p>k8sは基本的にはどのノードに <code>Pod</code> がデプロイされるかは制御できませんが、<code>affinity</code>という設定をすることで <code>Pod</code> やノードにつけたラベルを元にデプロイ先を制御することができます。<br>
+今回の設定は <code>Pod</code> 側に設定したラベルと同じラベルを持つ <code>Pod</code> が動いているノードにスケジュールしないって設定です、これを行うことでノード間で <code>Pod</code> を分散してデプロイさせることができるんですね。</p>
+<p>これで <code>1/2</code> の確率でリクエストが失敗するって現象も無くなったので急いで解答として提出しました<sup id=fnref:5><a href=#fn:5 class=footnote-ref role=doc-noteref>5</a></sup>。</p>
+<h4 id=追記>追記</h4>
+<p>これは予選が終わってから気がついたのですが、私の意図していた通りだと <code>Deployment</code> のスケジュールの設定が<code>requiredDuringSchedulingIgnoredDuringExecution</code>ではなくて <code>preferredDuringSchedulingIgnoredDuringExecution</code> なんですよね。<br>
+前者だとスケジュールの設定が守られなければ <code>Pod</code> がデプロイされなくて、後者だとスケジュールの設定は優先するけど該当するノードが無い場合はスケジュールは無視されて普通にデプロイされます<sup id=fnref:6><a href=#fn:6 class=footnote-ref role=doc-noteref>6</a></sup>。</p>
+<h1 id=まとめ>まとめ</h1>
+<p>以上ICTSC2020予選のwriteupでした。なにか理解不足や間違いがあるかもしれません。見つけたらご連絡下さい。<br>
+個人的な感想で言えば、コンテナとかk8s辺りの私の得意とする領域を一人でやってしまったので、後輩の育成のためを思えばもうちょっとチーム内の問題配分を考えるべきだったかなとか思いますが、まあ、後輩は優秀なので私が卒業する来年以降も自力でなんとかしてくれるでしょう。</p>
+<p>なお<a href=https://blog.icttoracon.net/2020/11/02/ictsc2020-%e4%b8%80%e6%ac%a1%e4%ba%88%e9%81%b8-%e5%95%8f%e9%a1%8c%e8%a7%a3%e8%aa%ac%e3%81%be%e3%81%a8%e3%82%81/>運営による解説</a>がもう出ていますし、当日使っていた<a href=https://github.com/kstm-su/ictsc_2020_kstm_pre>githubのissue</a>を<code>public</code>にしたので誰でも見れます。良かったらどうぞ。</p>
+<section class=footnotes role=doc-endnotes>
+<hr>
+<ol>
+<li id=fn:1 role=doc-endnote>
+<p>他の問題も詰まった時とかに手助けしてましたが、他の人が書くと思うので割愛します。&#160;<a href=#fnref:1 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:2 role=doc-endnote>
+<p>解説によれば<code>10MB</code>以下なら満点らしいので杞憂でしたが&mldr;.&#160;<a href=#fnref:2 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:3 role=doc-endnote>
+<p>本当は <code>NodePort</code> の設定を変えた辺りから発生してたけど無視(Todo)してた&#160;<a href=#fnref:3 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:4 role=doc-endnote>
+<p>今回の場合は <code>NodePort</code> で送信元IPを使わない設定でも <code>NetworkPolicy</code> の設定でプロキシできないのでどっちにしろ駄目ですね。&#160;<a href=#fnref:4 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:5 role=doc-endnote>
+<p>時間もぎりぎりだった&#160;<a href=#fnref:5 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:6 role=doc-endnote>
+<p><code>required</code> の方の何が問題かと言うと、この設定だとノード数以上の <code>Pod</code> がデプロイできないですね。&#160;<a href=#fnref:6 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!doctype html><html lang=ja-jp>
+<head>
+<title>archlinuxのパッケージについて // kob | blog</title>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.88.1">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="yugo kobayashi">
+<meta name=description content>
+<link rel=stylesheet href=https://www.k06.in/css/main.min.88e7083eff65effb7485b6e6f38d10afbec25093a6fac42d734ce9024d3defbd.css>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(a,e,f,g,b,c,d){a.GoogleAnalyticsObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=1,c.src=g,d.parentNode.insertBefore(c,d)}(window,document,'script','https://www.google-analytics.com/analytics.js','ga'),ga('create','UA-147206080-1','auto'),ga('send','pageview'))</script>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="archlinuxのパッケージについて">
+<meta name=twitter:description content="about この記事は archlinux のパッケージとリポジトリに関することを解説する記事です
+archlinuxの公式リポジトリ archlinuxの公式リポジトリはパッケージがbuild済みの状態で配布されています。
+リポジトリは主に Core , Extra , Community の三種類です1。
+基本的には Core には動作に必須なパッケージ、Extra にはそれ以外のパッケージが入っており、この2つが archlinux の開発チームが管理するパッケージのリポジトリになります。
+もう一つのリポジトリの Community にはユーザが作成したパッケージの中で人気がある物などを公式で配布するためのリポジトリです。
+PKGBUILD PKGBUILDは archlinux で使われているパッケージビルド用のファイルで、依存関係の解決やパッケージに必要なファイルのビルドやディレクトリへのインストールを行います。
+archlinux 公式のパッケージの作成だけでなく、後述の aur にも使用されています。
+PKGBUILD は makepkg というスクリプトでビルドされて、最終的にpacman という archlinux の公式のパッケージネージャーで扱えるアーカイブ形式になります。
+PKGBUILD は実態が ShellScript なので、例えばbuild時に必要なファイルを同梱せず curl で取ってくるような操作が可能です。これを利用すると再配布が禁止されているプロプライエタリなソフトウェアをパッケージにすることができます。2 3
+aur aur は archlinux のユーザーコミュニティで PKGBUILD を共有するためのリポジトリです。アカウントを作れば誰でも自由にアップロードすることができます。
+利用したいソフトウェアがある場合、ユーザは aur からダウンロードした PKGBUILD を makepkg でビルドした後に pacman で簡単にインストールすることができます。ビルドからインストールまでは自動化されているのでユーザは最低限の操作で他のユーザから共有されたパッケージを使うことが可能です。便利ですね。
+aur は簡単に作成できる4こともあり、膨大な数が作成されています。 archlinux の Community リポジトリはこの aur で配布されている中で人気のあるソフトウェアをビルド済みのパッケージにして配布しています5。この制度が archlinux が小規模なプロジェクトながら大量のパッケージを公式リポジトリで配布可能にしています6。">
+<meta property="og:title" content="archlinuxのパッケージについて">
+<meta property="og:description" content="about この記事は archlinux のパッケージとリポジトリに関することを解説する記事です
+archlinuxの公式リポジトリ archlinuxの公式リポジトリはパッケージがbuild済みの状態で配布されています。
+リポジトリは主に Core , Extra , Community の三種類です1。
+基本的には Core には動作に必須なパッケージ、Extra にはそれ以外のパッケージが入っており、この2つが archlinux の開発チームが管理するパッケージのリポジトリになります。
+もう一つのリポジトリの Community にはユーザが作成したパッケージの中で人気がある物などを公式で配布するためのリポジトリです。
+PKGBUILD PKGBUILDは archlinux で使われているパッケージビルド用のファイルで、依存関係の解決やパッケージに必要なファイルのビルドやディレクトリへのインストールを行います。
+archlinux 公式のパッケージの作成だけでなく、後述の aur にも使用されています。
+PKGBUILD は makepkg というスクリプトでビルドされて、最終的にpacman という archlinux の公式のパッケージネージャーで扱えるアーカイブ形式になります。
+PKGBUILD は実態が ShellScript なので、例えばbuild時に必要なファイルを同梱せず curl で取ってくるような操作が可能です。これを利用すると再配布が禁止されているプロプライエタリなソフトウェアをパッケージにすることができます。2 3
+aur aur は archlinux のユーザーコミュニティで PKGBUILD を共有するためのリポジトリです。アカウントを作れば誰でも自由にアップロードすることができます。
+利用したいソフトウェアがある場合、ユーザは aur からダウンロードした PKGBUILD を makepkg でビルドした後に pacman で簡単にインストールすることができます。ビルドからインストールまでは自動化されているのでユーザは最低限の操作で他のユーザから共有されたパッケージを使うことが可能です。便利ですね。
+aur は簡単に作成できる4こともあり、膨大な数が作成されています。 archlinux の Community リポジトリはこの aur で配布されている中で人気のあるソフトウェアをビルド済みのパッケージにして配布しています5。この制度が archlinux が小規模なプロジェクトながら大量のパッケージを公式リポジトリで配布可能にしています6。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.k06.in/posts/packages_on_archlinux/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-08-18T12:47:14+09:00">
+<meta property="article:modified_time" content="2020-08-18T12:47:14+09:00">
+</head>
+<body>
+<header class=app-header>
+<a href=https://www.k06.in/><img class=app-header-avatar src=https://avatars.githubusercontent.com/u/28655507 alt="yugo kobayashi"></a>
+<h1>kob | blog</h1>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About</a>
+-
+<a class=app-header-menu-item href=/posts/>Post</a>
+-
+<a class=app-header-menu-item href=/tags/>Tag</a>
+</nav>
+<p>I'm yugo kobayashi. CloudNative / kubernetes / archlinux</p>
+<div class=app-header-social>
+<a target=_blank href=https://github.com/koba1t rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
+<a target=_blank href=https://twitter.com/0x6b6f62 rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-twitter"><title>twitter</title><path d="M23 3a10.9 10.9.0 01-3.14 1.53 4.48 4.48.0 00-7.86 3v1A10.66 10.66.0 013 4s-4 9 5 13a11.64 11.64.0 01-7 2c9 5 20 0 20-11.5a4.5 4.5.0 00-.08-.83A7.72 7.72.0 0023 3z"/></svg></a>
+<a target=_blank href=https://500px.com/p/koba1t rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-image"><title>image</title><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></a>
+<a target=_blank href=https://www.linkedin.com/in/koba1t/ rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+</div>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>archlinuxのパッケージについて</h1>
+<div class=post-meta>
+<div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Aug 18, 2020
+</div>
+<div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+1 min read
+</div>
+<div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tag"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg>
+<a class=tag href=https://www.k06.in/tags/archlinux/>archlinux</a>
+<a class=tag href=https://www.k06.in/tags/linux/>linux</a>
+<a class=tag href=https://www.k06.in/tags/package_manager/>package_manager</a>
+</div>
+</div>
+</header>
+<div class=post-content>
+<h1 id=about>about</h1>
+<p>この記事は <code>archlinux</code> のパッケージとリポジトリに関することを解説する記事です</p>
+<h1 id=archlinuxの公式リポジトリ>archlinuxの公式リポジトリ</h1>
+<p>archlinuxの公式リポジトリはパッケージがbuild済みの状態で配布されています。<br>
+リポジトリは主に <code>Core</code> , <code>Extra</code> , <code>Community</code> の三種類です<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>。</p>
+<p>基本的には <code>Core</code> には動作に必須なパッケージ、<code>Extra</code> にはそれ以外のパッケージが入っており、この2つが <code>archlinux</code> の開発チームが管理するパッケージのリポジトリになります。<br>
+もう一つのリポジトリの <code>Community</code> にはユーザが作成したパッケージの中で人気がある物などを公式で配布するためのリポジトリです。</p>
+<h1 id=pkgbuild>PKGBUILD</h1>
+<p><a href=https://wiki.archlinux.jp/index.php/PKGBUILD>PKGBUILD</a>は <code>archlinux</code> で使われているパッケージビルド用のファイルで、依存関係の解決やパッケージに必要なファイルのビルドやディレクトリへのインストールを行います。<br>
+<code>archlinux</code> 公式のパッケージの作成だけでなく、後述の <code>aur</code> にも使用されています。</p>
+<p><code>PKGBUILD</code> は <a href=https://wiki.archlinux.jp/index.php/Makepkg>makepkg</a> というスクリプトでビルドされて、最終的に<a href=https://wiki.archlinux.jp/index.php/pacman>pacman</a> という <code>archlinux</code> の公式のパッケージネージャーで扱えるアーカイブ形式になります。</p>
+<p><code>PKGBUILD</code> は実態が <code>ShellScript</code> なので、例えばbuild時に必要なファイルを同梱せず <code>curl</code> で取ってくるような操作が可能です。これを利用すると再配布が禁止されているプロプライエタリなソフトウェアをパッケージにすることができます。<sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup> <sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup></p>
+<h1 id=aur>aur</h1>
+<p><a href=https://aur.archlinux.org/>aur</a> は <code>archlinux</code> のユーザーコミュニティで <code>PKGBUILD</code> を共有するためのリポジトリです。アカウントを作れば誰でも自由にアップロードすることができます。<br>
+利用したいソフトウェアがある場合、ユーザは <code>aur</code> からダウンロードした <code>PKGBUILD</code> を <code>makepkg</code> でビルドした後に <code>pacman</code> で簡単にインストールすることができます。ビルドからインストールまでは自動化されているのでユーザは最低限の操作で他のユーザから共有されたパッケージを使うことが可能です。便利ですね。</p>
+<p><code>aur</code> は簡単に作成できる<sup id=fnref:4><a href=#fn:4 class=footnote-ref role=doc-noteref>4</a></sup>こともあり、膨大な数が作成されています。 <code>archlinux</code> の <code>Community</code> リポジトリはこの <code>aur</code> で配布されている中で人気のあるソフトウェアをビルド済みのパッケージにして配布しています<sup id=fnref:5><a href=#fn:5 class=footnote-ref role=doc-noteref>5</a></sup>。この制度が <code>archlinux</code> が小規模なプロジェクトながら大量のパッケージを公式リポジトリで配布可能にしています<sup id=fnref:6><a href=#fn:6 class=footnote-ref role=doc-noteref>6</a></sup>。</p>
+<section class=footnotes role=doc-endnotes>
+<hr>
+<ol>
+<li id=fn:1 role=doc-endnote>
+<p>他にも各種 <code>test</code> 用や32bit互換のためのライブラリ等の入ったリポジトリがありますがここでは触れません&#160;<a href=#fnref:1 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:2 role=doc-endnote>
+<p><a href=https://aur.archlinux.org/packages/spotify/>spotify</a> とか <a href=https://aur.archlinux.org/packages/google-chrome/>google-chrome</a> とか <a href=https://aur.archlinux.org/packages/minecraft/>minecraft</a> とか&mldr;&#160;<a href=#fnref:2 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:3 role=doc-endnote>
+<p>ただし、この方法で作成したパッケージは <code>Community</code> リポジトリで配布できませんね。 <code>discord</code> のクライアントは <code>Discord Inc.</code> にメールして直接再配布の許可を得たみたいで公式リポジトリからインストールできますが&mldr;.&#160;<a href=#fnref:3 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:4 role=doc-endnote>
+<p><code>PKGBUILD</code> 独自の要素もシンプルなため <code>ShellsScript</code> の知識さえあれば作れます。&#160;<a href=#fnref:4 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:5 role=doc-endnote>
+<p>ちなみに <code>aur</code> から <code>Community</code> に移動させる権限を持つのは <code>archlinux</code> のメンテナではなく <a href=https://wiki.archlinux.jp/index.php/Trusted_Users>Trusted Users</a> と呼ばれる別の役割の人達です。&#160;<a href=#fnref:5 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:6 role=doc-endnote>
+<p><code>archlinux</code> の常に最新の安定版のソフトウェアを利用するというポリシーのお陰で依存関係をシンプルにできるからという点もあります。&#160;<a href=#fnref:6 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+</body>
+</html>

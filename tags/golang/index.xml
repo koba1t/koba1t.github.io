@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>golang on kob | blog</title><link>https://www.k06.in/tags/golang/</link><description>Recent content in golang on kob | blog</description><generator>Hugo -- gohugo.io</generator><language>ja-JP</language><lastBuildDate>Thu, 13 Aug 2020 18:04:20 +0900</lastBuildDate><atom:link href="https://www.k06.in/tags/golang/index.xml" rel="self" type="application/rss+xml"/><item><title>kubebuilderで作ったcrdを操作するのはcontroller-runtimeを使うのが楽</title><link>https://www.k06.in/posts/controller-runtime_for_crd_created_kubebuilder/</link><pubDate>Thu, 13 Aug 2020 18:04:20 +0900</pubDate><guid>https://www.k06.in/posts/controller-runtime_for_crd_created_kubebuilder/</guid><description>概要 k8sのリソースをCRUDする代表的な手順と言えば公式のライブラリであるclient-goですね。 これは deployment なんかのk8sのデフォルトであるリソースや、client-go で生成されたコードを使うCRDの場合には簡単に使えて便利なんですが、カスタムコントローラーを作るのに一般的に使われるkubebuilderは内部的にcontroller-runtimeってツールを使ってます。これが生成するpkgは client-go と互換性が無い1ので自作したカスタムリソースの操作を client-go からじゃできないです。
+解決策は kubebuilder で作られたCRDのリソースの操作には client-go じゃなくて直接 controller-runtime を使うことらしいです。
+なので controller-runtime をkubebuilderで生成したカスタムコントローラー外から使う方法を記します。
+なお、良い例を見つけることができなかったので以下では基本的に私のコードを使って解説します。
+具体的に では実際にコードを書きましょう。
+ライブラリ まず必要になるライブラリをimportします。
+4import ( 5 &amp;#34;context&amp;#34; 6 &amp;#34;fmt&amp;#34; 7 &amp;#34;log&amp;#34; 8 &amp;#34;net/http&amp;#34; 9 &amp;#34;net/http/httputil&amp;#34; 10 &amp;#34;os&amp;#34; 11 12 metav1 &amp;#34;k8s.io/apimachinery/pkg/apis/meta/v1&amp;#34; 13 &amp;#34;k8s.io/apimachinery/pkg/runtime&amp;#34; 14 15 &amp;#34;sigs.k8s.io/controller-runtime/pkg/client&amp;#34; 16 &amp;#34;sigs.k8s.io/controller-runtime/pkg/client/config&amp;#34; 17 18 escv1alpha1 &amp;#34;github.com/koba1t/ESC/api/v1alpha1&amp;#34; 19) controller-runtime のクライアントライブラリだけでなく、k8s公式のクライアントライブラリもschemeやObjectの定義を利用するために必要です。
+Schemeの設定 次にSchemeの設定をしましょう。
+このSchemeはk8sのAPIオブジェクトをgolangの構造体にマッピングしたりするために使われます。
+22var ( 23 scheme = runtime.NewScheme() 24) 25 26func init() { 27 // init scheme 28 _ = escv1alpha1.</description></item></channel></rss>

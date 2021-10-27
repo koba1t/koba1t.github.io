@@ -1,0 +1,172 @@
+<!doctype html><html lang=ja-jp>
+<head>
+<title>kubebuilderで作ったcrdを操作するのはcontroller-runtimeを使うのが楽 // kob | blog</title>
+<meta charset=utf-8>
+<meta name=generator content="Hugo 0.88.1">
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=author content="yugo kobayashi">
+<meta name=description content>
+<link rel=stylesheet href=https://www.k06.in/css/main.min.88e7083eff65effb7485b6e6f38d10afbec25093a6fac42d734ce9024d3defbd.css>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(function(a,e,f,g,b,c,d){a.GoogleAnalyticsObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=1,c.src=g,d.parentNode.insertBefore(c,d)}(window,document,'script','https://www.google-analytics.com/analytics.js','ga'),ga('create','UA-147206080-1','auto'),ga('send','pageview'))</script>
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="kubebuilderで作ったcrdを操作するのはcontroller-runtimeを使うのが楽">
+<meta name=twitter:description content="概要 k8sのリソースをCRUDする代表的な手順と言えば公式のライブラリであるclient-goですね。 これは deployment なんかのk8sのデフォルトであるリソースや、client-go で生成されたコードを使うCRDの場合には簡単に使えて便利なんですが、カスタムコントローラーを作るのに一般的に使われるkubebuilderは内部的にcontroller-runtimeってツールを使ってます。これが生成するpkgは client-go と互換性が無い1ので自作したカスタムリソースの操作を client-go からじゃできないです。
+解決策は kubebuilder で作られたCRDのリソースの操作には client-go じゃなくて直接 controller-runtime を使うことらしいです。
+なので controller-runtime をkubebuilderで生成したカスタムコントローラー外から使う方法を記します。
+なお、良い例を見つけることができなかったので以下では基本的に私のコードを使って解説します。
+具体的に では実際にコードを書きましょう。
+ライブラリ まず必要になるライブラリをimportします。
+4import ( 5	&#34;context&#34; 6	&#34;fmt&#34; 7	&#34;log&#34; 8	&#34;net/http&#34; 9	&#34;net/http/httputil&#34; 10	&#34;os&#34; 11 12	metav1 &#34;k8s.io/apimachinery/pkg/apis/meta/v1&#34; 13	&#34;k8s.io/apimachinery/pkg/runtime&#34; 14 15	&#34;sigs.k8s.io/controller-runtime/pkg/client&#34; 16	&#34;sigs.k8s.io/controller-runtime/pkg/client/config&#34; 17 18	escv1alpha1 &#34;github.com/koba1t/ESC/api/v1alpha1&#34; 19) controller-runtime のクライアントライブラリだけでなく、k8s公式のクライアントライブラリもschemeやObjectの定義を利用するために必要です。
+Schemeの設定 次にSchemeの設定をしましょう。
+このSchemeはk8sのAPIオブジェクトをgolangの構造体にマッピングしたりするために使われます。
+22var ( 23	scheme = runtime.NewScheme() 24) 25 26func init() { 27	// init scheme 28	_ = escv1alpha1.">
+<meta property="og:title" content="kubebuilderで作ったcrdを操作するのはcontroller-runtimeを使うのが楽">
+<meta property="og:description" content="概要 k8sのリソースをCRUDする代表的な手順と言えば公式のライブラリであるclient-goですね。 これは deployment なんかのk8sのデフォルトであるリソースや、client-go で生成されたコードを使うCRDの場合には簡単に使えて便利なんですが、カスタムコントローラーを作るのに一般的に使われるkubebuilderは内部的にcontroller-runtimeってツールを使ってます。これが生成するpkgは client-go と互換性が無い1ので自作したカスタムリソースの操作を client-go からじゃできないです。
+解決策は kubebuilder で作られたCRDのリソースの操作には client-go じゃなくて直接 controller-runtime を使うことらしいです。
+なので controller-runtime をkubebuilderで生成したカスタムコントローラー外から使う方法を記します。
+なお、良い例を見つけることができなかったので以下では基本的に私のコードを使って解説します。
+具体的に では実際にコードを書きましょう。
+ライブラリ まず必要になるライブラリをimportします。
+4import ( 5	&#34;context&#34; 6	&#34;fmt&#34; 7	&#34;log&#34; 8	&#34;net/http&#34; 9	&#34;net/http/httputil&#34; 10	&#34;os&#34; 11 12	metav1 &#34;k8s.io/apimachinery/pkg/apis/meta/v1&#34; 13	&#34;k8s.io/apimachinery/pkg/runtime&#34; 14 15	&#34;sigs.k8s.io/controller-runtime/pkg/client&#34; 16	&#34;sigs.k8s.io/controller-runtime/pkg/client/config&#34; 17 18	escv1alpha1 &#34;github.com/koba1t/ESC/api/v1alpha1&#34; 19) controller-runtime のクライアントライブラリだけでなく、k8s公式のクライアントライブラリもschemeやObjectの定義を利用するために必要です。
+Schemeの設定 次にSchemeの設定をしましょう。
+このSchemeはk8sのAPIオブジェクトをgolangの構造体にマッピングしたりするために使われます。
+22var ( 23	scheme = runtime.NewScheme() 24) 25 26func init() { 27	// init scheme 28	_ = escv1alpha1.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://www.k06.in/posts/controller-runtime_for_crd_created_kubebuilder/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-08-13T18:04:20+09:00">
+<meta property="article:modified_time" content="2020-08-13T18:04:20+09:00">
+</head>
+<body>
+<header class=app-header>
+<a href=https://www.k06.in/><img class=app-header-avatar src=https://avatars.githubusercontent.com/u/28655507 alt="yugo kobayashi"></a>
+<h1>kob | blog</h1>
+<nav class=app-header-menu>
+<a class=app-header-menu-item href=/about/>About</a>
+-
+<a class=app-header-menu-item href=/posts/>Post</a>
+-
+<a class=app-header-menu-item href=/tags/>Tag</a>
+</nav>
+<p>I'm yugo kobayashi. CloudNative / kubernetes / archlinux</p>
+<div class=app-header-social>
+<a target=_blank href=https://github.com/koba1t rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a>
+<a target=_blank href=https://twitter.com/0x6b6f62 rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-twitter"><title>twitter</title><path d="M23 3a10.9 10.9.0 01-3.14 1.53 4.48 4.48.0 00-7.86 3v1A10.66 10.66.0 013 4s-4 9 5 13a11.64 11.64.0 01-7 2c9 5 20 0 20-11.5a4.5 4.5.0 00-.08-.83A7.72 7.72.0 0023 3z"/></svg></a>
+<a target=_blank href=https://500px.com/p/koba1t rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-image"><title>image</title><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></a>
+<a target=_blank href=https://www.linkedin.com/in/koba1t/ rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-linkedin"><title>linkedin</title><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+</div>
+</header>
+<main class=app-container>
+<article class=post>
+<header class=post-header>
+<h1 class=post-title>kubebuilderで作ったcrdを操作するのはcontroller-runtimeを使うのが楽</h1>
+<div class=post-meta>
+<div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+Aug 13, 2020
+</div>
+<div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+1 min read
+</div>
+<div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tag"><title>tag</title><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83.0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7" y2="7"/></svg>
+<a class=tag href=https://www.k06.in/tags/kubernetes/>kubernetes</a>
+<a class=tag href=https://www.k06.in/tags/crd/>crd</a>
+<a class=tag href=https://www.k06.in/tags/kubebuilder/>kubebuilder</a>
+<a class=tag href=https://www.k06.in/tags/golang/>golang</a>
+</div>
+</div>
+</header>
+<div class=post-content>
+<h1 id=概要>概要</h1>
+<p>k8sのリソースをCRUDする代表的な手順と言えば公式のライブラリである<a href=https://github.com/kubernetes/client-go>client-go</a>ですね。
+これは <code>deployment</code> なんかのk8sのデフォルトであるリソースや、<code>client-go</code> で生成されたコードを使うCRDの場合には簡単に使えて便利なんですが、カスタムコントローラーを作るのに一般的に使われる<a href=https://github.com/kubernetes-sigs/kubebuilder>kubebuilder</a>は内部的に<a href=https://github.com/kubernetes-sigs/controller-runtime>controller-runtime</a>ってツールを使ってます。これが生成するpkgは <code>client-go</code> と互換性が無い<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>ので自作したカスタムリソースの操作を <code>client-go</code> からじゃできないです。</p>
+<p>解決策は <code>kubebuilder</code> で作られたCRDのリソースの操作には <code>client-go</code> じゃなくて直接 <code>controller-runtime</code> を使うことらしいです。<br>
+なので <code>controller-runtime</code> をkubebuilderで生成したカスタムコントローラー外から使う方法を記します。</p>
+<p>なお、良い例を見つけることができなかったので以下では基本的に<a href=https://github.com/koba1t/esc-proxy/blob/v0.1.0/main.go>私のコード</a>を使って解説します。</p>
+<h1 id=具体的に>具体的に</h1>
+<p>では実際にコードを書きましょう。</p>
+<h3 id=ライブラリ>ライブラリ</h3>
+<p>まず必要になるライブラリをimportします。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4</span><span style=color:#f92672>import</span> (
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5</span>	<span style=color:#e6db74>&#34;context&#34;</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6</span>	<span style=color:#e6db74>&#34;fmt&#34;</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7</span>	<span style=color:#e6db74>&#34;log&#34;</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8</span>	<span style=color:#e6db74>&#34;net/http&#34;</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9</span>	<span style=color:#e6db74>&#34;net/http/httputil&#34;</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">10</span>	<span style=color:#e6db74>&#34;os&#34;</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">11</span>
+<span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">12</span>	<span style=color:#a6e22e>metav1</span> <span style=color:#e6db74>&#34;k8s.io/apimachinery/pkg/apis/meta/v1&#34;</span>
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">13</span>	<span style=color:#e6db74>&#34;k8s.io/apimachinery/pkg/runtime&#34;</span>
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">14</span>
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">15</span>	<span style=color:#e6db74>&#34;sigs.k8s.io/controller-runtime/pkg/client&#34;</span>
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">16</span>	<span style=color:#e6db74>&#34;sigs.k8s.io/controller-runtime/pkg/client/config&#34;</span>
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">17</span>
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">18</span>	<span style=color:#a6e22e>escv1alpha1</span> <span style=color:#e6db74>&#34;github.com/koba1t/ESC/api/v1alpha1&#34;</span>
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">19</span>)
+</code></pre></div><p><code>controller-runtime</code> のクライアントライブラリだけでなく、k8s公式のクライアントライブラリも<a href=https://pkg.go.dev/k8s.io/apimachinery@v0.18.6/pkg/runtime#Scheme>scheme</a>や<code>Object</code>の定義を利用するために必要です。</p>
+<h3 id=schemeの設定>Schemeの設定</h3>
+<p>次に<code>Scheme</code>の設定をしましょう。<br>
+この<code>Scheme</code>はk8sのAPIオブジェクトをgolangの構造体にマッピングしたりするために使われます。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">22</span><span style=color:#66d9ef>var</span> (
+<span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">23</span>	<span style=color:#a6e22e>scheme</span> = <span style=color:#a6e22e>runtime</span>.<span style=color:#a6e22e>NewScheme</span>()
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">24</span>)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">25</span>
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">26</span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>init</span>() {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">27</span>	<span style=color:#75715e>// init scheme
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">28</span><span style=color:#75715e></span>	<span style=color:#a6e22e>_</span> = <span style=color:#a6e22e>escv1alpha1</span>.<span style=color:#a6e22e>AddToScheme</span>(<span style=color:#a6e22e>scheme</span>)
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">29</span>}
+</code></pre></div><p>k8sのライブラリを使って<code>scheme</code>を新しく生成します。<br>
+ここで生成した<code>scheme</code>にはCRDのリソースを扱う機能がまだ入っていないので、CRD側のライブラリで追加します。</p>
+<h3 id=clientの作成>clientの作成</h3>
+<p>次に k8sのリソースを操作するためのクライアントを<code>controller-runtime</code> のライブラリ から作成しましょう。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">54</span><span style=color:#a6e22e>cl</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>client</span>.<span style=color:#a6e22e>New</span>(<span style=color:#a6e22e>config</span>.<span style=color:#a6e22e>GetConfigOrDie</span>(), <span style=color:#a6e22e>client</span>.<span style=color:#a6e22e>Options</span>{<span style=color:#a6e22e>Scheme</span>: <span style=color:#a6e22e>scheme</span>})
+</code></pre></div><p>k8s内で動かす場合は <a href=https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.6.2/pkg/client/config#GetConfigOrDie>GetConfigOrDie()</a> を使うことで <code>kube-apiserver</code> にアクセスするための <code>kubeconfig</code> を自動で設定してくれます。<br>
+ここで、<code>client.New</code> の際に <code>client.Options{Scheme: scheme}</code> を指定して、今回使用するCRDを追加したschemeを設定するのを忘れないようにしてください。これを指定しないとCRDのリソースが操作できません。<sup id=fnref:2><a href=#fn:2 class=footnote-ref role=doc-noteref>2</a></sup></p>
+<h3 id=k8sリソースの作成>k8sリソースの作成</h3>
+<p>後は作りたいリソースの<code>Object</code>の形式の構造体を組み立てて、先程作成したクライアントで<code>Create</code>するだけです。</p>
+<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">86</span>		<span style=color:#a6e22e>escuser</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>escv1alpha1</span>.<span style=color:#a6e22e>Userland</span>{
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">87</span>			<span style=color:#a6e22e>ObjectMeta</span>: <span style=color:#a6e22e>metav1</span>.<span style=color:#a6e22e>ObjectMeta</span>{
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">88</span>				<span style=color:#a6e22e>Namespace</span>: <span style=color:#a6e22e>namespaceName</span>,
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">89</span>				<span style=color:#a6e22e>Name</span>:      <span style=color:#a6e22e>username</span>,
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">90</span>			},
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">91</span>			<span style=color:#a6e22e>Spec</span>: <span style=color:#a6e22e>escv1alpha1</span>.<span style=color:#a6e22e>UserlandSpec</span>{
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">92</span>				<span style=color:#a6e22e>TemplateName</span>: <span style=color:#a6e22e>escTemplateName</span>,
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">93</span>			},
+</span><span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">94</span>		}
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">95</span>
+<span style=display:block;width:100%;background-color:#3c3d38><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">96</span>		<span style=color:#a6e22e>e</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>cl</span>.<span style=color:#a6e22e>Create</span>(<span style=color:#a6e22e>context</span>.<span style=color:#a6e22e>Background</span>(), <span style=color:#a6e22e>escuser</span>)
+</span><span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">97</span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>e</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">98</span>			<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Printf</span>(<span style=color:#e6db74>&#34;Userland create error: %v\n&#34;</span>, <span style=color:#a6e22e>e</span>)
+<span style="margin-right:.4em;padding:0 .4em;color:#7f7f7f">99</span>		}
+</code></pre></div><p>これで実際にkubernetesのリソースが作成されます。</p>
+<h1 id=k8sで動かすには>k8sで動かすには</h1>
+<p>ちなみにCRDに限らずk8sのオブジェクトを操作するためには権限が必要になるので、Roleを作ってRoleBindingしたServiceAccountをコードを動かすコンテナから使えるようにする必要があります。</p>
+<h1 id=まとめ>まとめ</h1>
+<p>kubebuilderで生成したCRDをcrudしようとした時、参考になる文献が無くてこまったので書きました。<sup id=fnref:3><a href=#fn:3 class=footnote-ref role=doc-noteref>3</a></sup><br>
+誰かの助けになれば幸いです。</p>
+<h1 id=参考>参考</h1>
+<ul>
+<li><a href=https://github.com/kubernetes-sigs/kubebuilder>kubebuilder</a></li>
+<li><a href=https://github.com/kubernetes-sigs/controller-runtime>controller-runtime</a></li>
+<li><a href="https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.6.2/pkg/client?tab=doc#example-Client-Create">controller-runtimeのexample</a></li>
+<li><a href=https://zoetrope.github.io/kubebuilder-training/>つくって学ぶKubebuilder</a></li>
+</ul>
+<section class=footnotes role=doc-endnotes>
+<hr>
+<ol>
+<li id=fn:1 role=doc-endnote>
+<p>これは<code>controller-runtime</code>が<code>client-go</code>互換のinterfaceを作成しないのが原因なんですが、kubebuilderのissueに<a href=https://github.com/kubernetes-sigs/kubebuilder/issues/1152>こう</a>書かれているので今後もサポートしそうにないですね。&#160;<a href=#fnref:1 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:2 role=doc-endnote>
+<p>私はこれを忘れて半日溶かしました&#160;<a href=#fnref:2 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+<li id=fn:3 role=doc-endnote>
+<p>コントローラの外から使うという需要がそもそも無いのかもしれない。&#160;<a href=#fnref:3 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+</div>
+<div class=post-footer>
+</div>
+</article>
+</main>
+</body>
+</html>

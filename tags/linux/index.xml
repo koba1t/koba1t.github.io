@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>linux on kob | blog</title><link>https://www.k06.in/tags/linux/</link><description>Recent content in linux on kob | blog</description><generator>Hugo -- gohugo.io</generator><language>ja-JP</language><lastBuildDate>Fri, 06 Nov 2020 23:55:46 +0900</lastBuildDate><atom:link href="https://www.k06.in/tags/linux/index.xml" rel="self" type="application/rss+xml"/><item><title>ICTSC2020予選writeup</title><link>https://www.k06.in/posts/ictsc2020_pre_writeup/</link><pubDate>Fri, 06 Nov 2020 23:55:46 +0900</pubDate><guid>https://www.k06.in/posts/ictsc2020_pre_writeup/</guid><description>ICTSC2020の予選にkstmで参加したので、writeupを書きます。
+結果は4位でした。
+当日私が解いた問題は
+またビルド失敗しちゃった～ ダイエットしようぜ！ どこからもアクセスできなくなっちゃった の3つ1でどれも満点でした
+またビルド失敗しちゃった～ 問題文 概要
+新入社員の障害太郎くんがGoの勉強をしようとしています。 どうやらDockerのマルチステージビルドを使って、Goのバイナリをコンテナ上で実行しようとしたらうまく立ち上がらないようです。 先輩のトラシュウさんに聞いたところ、「Dockerfileが間違っている」というメモを残して業務に戻ってしまいました。 先輩のトラシュウさんの代わりに原因を特定して修正してあげてください。 前提条件
+~/app/Dockerfile のみ変更可能です。 ~/app/Dockerfile の1,9,12行目は変更しないでください。 ビルド用のコンテナとバイナリ実行用のコンテナは分けてください。 初期状態
+~/app/Dockerfileを用いてdocker image build -t ictsc2020:0.1 .したあとに、docker run -p 80:1323 [コンテナID]をするとエラーが表示され、コンテナ上のバイナリが正常に実行できません。 終了状態
+curl localhostでWelcome to ICTSC2020!が返ってくる。 また、問題の解決が永続化されている。 解説 元のDockerfileがこれです。
+FROMgolang:1.15.0 AS builderENV GO111MODULE=on ENV GOPATH=COPY ./server/main.go ./RUN go mod init ictsc2020RUN go build -o /app ./main.goFROMalpine:3.12COPY --from=builder /app .EXPOSE1323ENTRYPOINT [&amp;#34;./app&amp;#34;]発生しているエラーの原因が依存ライブラリが見つからないのでgoのバイナリが実行できないという物です。
+これはgoのビルド時に特定のパッケージを使用していると確かglibcをdynamic linkしてビルドします。で、Docierfileに書かれているgolang:1.15.0ってイメージはdebianがベースになっているので、その上でビルドしたバイナリをalpineの環境に持っていっても動作しません。
+なのでgoのビルド時にCGO_ENABLED=0って環境変数を設定すると依存ライブラリがstatic linkになるので、これを設定して他の環境でも使えるバイナリを作ることができます。
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app .</description></item><item><title>archlinuxのパッケージについて</title><link>https://www.k06.in/posts/packages_on_archlinux/</link><pubDate>Tue, 18 Aug 2020 12:47:14 +0900</pubDate><guid>https://www.k06.in/posts/packages_on_archlinux/</guid><description>about この記事は archlinux のパッケージとリポジトリに関することを解説する記事です
+archlinuxの公式リポジトリ archlinuxの公式リポジトリはパッケージがbuild済みの状態で配布されています。
+リポジトリは主に Core , Extra , Community の三種類です1。
+基本的には Core には動作に必須なパッケージ、Extra にはそれ以外のパッケージが入っており、この2つが archlinux の開発チームが管理するパッケージのリポジトリになります。
+もう一つのリポジトリの Community にはユーザが作成したパッケージの中で人気がある物などを公式で配布するためのリポジトリです。
+PKGBUILD PKGBUILDは archlinux で使われているパッケージビルド用のファイルで、依存関係の解決やパッケージに必要なファイルのビルドやディレクトリへのインストールを行います。
+archlinux 公式のパッケージの作成だけでなく、後述の aur にも使用されています。
+PKGBUILD は makepkg というスクリプトでビルドされて、最終的にpacman という archlinux の公式のパッケージネージャーで扱えるアーカイブ形式になります。
+PKGBUILD は実態が ShellScript なので、例えばbuild時に必要なファイルを同梱せず curl で取ってくるような操作が可能です。これを利用すると再配布が禁止されているプロプライエタリなソフトウェアをパッケージにすることができます。2 3
+aur aur は archlinux のユーザーコミュニティで PKGBUILD を共有するためのリポジトリです。アカウントを作れば誰でも自由にアップロードすることができます。
+利用したいソフトウェアがある場合、ユーザは aur からダウンロードした PKGBUILD を makepkg でビルドした後に pacman で簡単にインストールすることができます。ビルドからインストールまでは自動化されているのでユーザは最低限の操作で他のユーザから共有されたパッケージを使うことが可能です。便利ですね。
+aur は簡単に作成できる4こともあり、膨大な数が作成されています。 archlinux の Community リポジトリはこの aur で配布されている中で人気のあるソフトウェアをビルド済みのパッケージにして配布しています5。この制度が archlinux が小規模なプロジェクトながら大量のパッケージを公式リポジトリで配布可能にしています6。</description></item><item><title>mpvとyoutube-dlでconsoleをyoutubeオーディオプレーヤーにする</title><link>https://www.k06.in/posts/mpv_and_youtube-dl/</link><pubDate>Fri, 14 Dec 2018 05:14:47 +0900</pubDate><guid>https://www.k06.in/posts/mpv_and_youtube-dl/</guid><description>mpvとyoutube-dlでconsoleをyoutubeオーディオプレーヤーにする この記事は信州大学 kstm Advent Calendar 2018の14日目です
+はじめに youtubeなどの動画サイトでBGMを作業用に流すことはよくあることだと思うのですが, 皆さん,browserで再生しますよね?
+browserを開いているとtwitterやredditなどの無関係なページ1をついつい見てしまって作業が進まないことってありませんか?
+そんな事態を減らすためにconsoleでBGMを再生してbrowserを必要な時以外は閉じてしまいましょう
+インストール 使うツールはmpvとyoutube-dlです
+mpvはオープンソースのコマンドラインメディアプレーヤー youtube-dlはその名前の通りyoutubeの動画2をダウンロードするツール 組み合わせて使えばストリーミングしながら再生することができます debianやubuntuは最近のversionじゃないと対応してないかもしれません
+## ArchLinux sudo pacman -S mpv youtube-dl ## debian,ubuntu sudo apt install mpv youtube-dl ## macの場合はこれで入るらしいです(未検証) brew install youtube-dl brew install mpv --with-bundle mpvの操作方法はこのページにあります consoleから再生できるのでRaspberry Piでメディアプレーヤを簡単に作ったり,用途は多そうです
+使いかた 実際にconsoleから再生しましょう urlをmpvに渡すだけでyoutube-dlを呼んでくれます
+## youtubeの動画 mpv --no-video --ytdl-format=bestaudio https://www.youtube.com/watch?v=kbjhO3iX1GY ## niconicoの動画やマイリストからの再生もできます mpv --no-video https://www.nicovideo.jp/watch/sm34236420 mpv --no-video https://www.nicovideo.jp/mylist/49902704 ## soundcloudも再生できます mpv --no-video https://soundcloud.com/user-185628379/japanese-piano-style mpv --no-video https://soundcloud.com/user-185628379 ## youtubeから検索した動画を流すこともできます mpv --no-video --ytdl-format=bestaudio ytdl://ytsearch10:&amp;quot;Maurice Ravel&amp;quot; また,このツールは他にも大量のサイトに対応しているらしいです。</description></item><item><title>~/.gitconfigをホームディレクトリのトップから移動させる</title><link>https://www.k06.in/posts/where_is_git_config/</link><pubDate>Thu, 18 Oct 2018 20:00:21 +0900</pubDate><guid>https://www.k06.in/posts/where_is_git_config/</guid><description>~/.gitconfigをホームディレクトリのトップから移動させる 要約 git は XDG Base Directory に対応しているため、環境変数で設定して~/.gitconfig を移動させれば読んでくれる。
+$ export XDG_CONFIG_HOME=&amp;quot;${HOME}/.config&amp;quot; $ mkdir $XDG_CONFIG_HOME/git $ mv ~/.gitconfig $XDG_CONFIG_HOME/git/config 詳しい内容 gitの設定ファイルは、同時に存在していれば~/.gitconfigの方が優先される。 デフォルトでは環境変数が設定されいても~/.gitconfigが作成される。
+$ export XDG_CONFIG_HOME=&amp;quot;${HOME}/.config&amp;quot; $ git config --global user.name &amp;quot;John&amp;quot; $ cat ~/.gitconfig [user] name = John 設定ファイルを新しいディレクトリにコピーする。
+$ mkdir $XDG_CONFIG_HOME/git $ cp ~/.gitconfig $XDG_CONFIG_HOME/git/config 削除しないと$XDG_CONFIG_HOME/git/configよりも~/.gitconfigが優先される。設定も~/.gitconfigに書かれる。
+$ git config --global user.name &amp;quot;Jack&amp;quot; $ cat ~/.gitconfig [user] name = Jack $ cat $XDG_CONFIG_HOME/git/config [user] name = John $ git config --list user.</description></item></channel></rss>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>ICTSC on kob | blog</title><link>https://www.k06.in/tags/ictsc/</link><description>Recent content in ICTSC on kob | blog</description><generator>Hugo -- gohugo.io</generator><language>ja-JP</language><lastBuildDate>Fri, 06 Nov 2020 23:55:46 +0900</lastBuildDate><atom:link href="https://www.k06.in/tags/ictsc/index.xml" rel="self" type="application/rss+xml"/><item><title>ICTSC2020予選writeup</title><link>https://www.k06.in/posts/ictsc2020_pre_writeup/</link><pubDate>Fri, 06 Nov 2020 23:55:46 +0900</pubDate><guid>https://www.k06.in/posts/ictsc2020_pre_writeup/</guid><description>ICTSC2020の予選にkstmで参加したので、writeupを書きます。
+結果は4位でした。
+当日私が解いた問題は
+またビルド失敗しちゃった～ ダイエットしようぜ！ どこからもアクセスできなくなっちゃった の3つ1でどれも満点でした
+またビルド失敗しちゃった～ 問題文 概要
+新入社員の障害太郎くんがGoの勉強をしようとしています。 どうやらDockerのマルチステージビルドを使って、Goのバイナリをコンテナ上で実行しようとしたらうまく立ち上がらないようです。 先輩のトラシュウさんに聞いたところ、「Dockerfileが間違っている」というメモを残して業務に戻ってしまいました。 先輩のトラシュウさんの代わりに原因を特定して修正してあげてください。 前提条件
+~/app/Dockerfile のみ変更可能です。 ~/app/Dockerfile の1,9,12行目は変更しないでください。 ビルド用のコンテナとバイナリ実行用のコンテナは分けてください。 初期状態
+~/app/Dockerfileを用いてdocker image build -t ictsc2020:0.1 .したあとに、docker run -p 80:1323 [コンテナID]をするとエラーが表示され、コンテナ上のバイナリが正常に実行できません。 終了状態
+curl localhostでWelcome to ICTSC2020!が返ってくる。 また、問題の解決が永続化されている。 解説 元のDockerfileがこれです。
+FROMgolang:1.15.0 AS builderENV GO111MODULE=on ENV GOPATH=COPY ./server/main.go ./RUN go mod init ictsc2020RUN go build -o /app ./main.goFROMalpine:3.12COPY --from=builder /app .EXPOSE1323ENTRYPOINT [&amp;#34;./app&amp;#34;]発生しているエラーの原因が依存ライブラリが見つからないのでgoのバイナリが実行できないという物です。
+これはgoのビルド時に特定のパッケージを使用していると確かglibcをdynamic linkしてビルドします。で、Docierfileに書かれているgolang:1.15.0ってイメージはdebianがベースになっているので、その上でビルドしたバイナリをalpineの環境に持っていっても動作しません。
+なのでgoのビルド時にCGO_ENABLED=0って環境変数を設定すると依存ライブラリがstatic linkになるので、これを設定して他の環境でも使えるバイナリを作ることができます。
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app .</description></item></channel></rss>
